@@ -1,0 +1,25 @@
+# ===== HarmonyOS 构建产物 =====
+.hvigor/
+**/build/
+oh-package-lock.json5
+
+# ===== Python / 工具 =====
+**/__pycache__/
+**/*.pyc
+**/.venv/
+tools/
+
+# ===== ObjectDetect 后端数据 =====
+**/cloud.db
+
+# ===== DevEco 本地配置（含 SDK 绝对路径，每台机器不同） =====
+**/local.properties
+
+# ===== 模拟器配置（不在代码库内） =====
+Mate*/
+Pura*/
+*.ini
+lists.json
+phone_config.json
+privacy.json
+versionInfo.txt

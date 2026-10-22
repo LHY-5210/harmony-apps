@@ -1,0 +1,24 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "人体解剖台"
+    },
+    {
+      "name": "module_desc",
+      "value": "人体解剖台混合模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "人体解剖台"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "人体解剖台"
+    },
+    {
+      "name": "permission_internet_reason",
+      "value": "用于 Web 组件离线加载能力初始化"
+    }
+  ]
+}

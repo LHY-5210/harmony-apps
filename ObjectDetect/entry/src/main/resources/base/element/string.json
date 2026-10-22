@@ -1,0 +1,32 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "智能物品识别"
+    },
+    {
+      "name": "module_desc",
+      "value": "端侧推理 + 云端管理的智能物品识别助手"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "智能物品识别"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "智能物品识别"
+    },
+    {
+      "name": "permission_internet_reason",
+      "value": "用于与云端后端同步识别记录和下载模型"
+    },
+    {
+      "name": "permission_camera_reason",
+      "value": "用于拍摄照片进行物品识别"
+    },
+    {
+      "name": "permission_network_info_reason",
+      "value": "用于监听网络恢复后自动重传待同步记录"
+    }
+  ]
+}

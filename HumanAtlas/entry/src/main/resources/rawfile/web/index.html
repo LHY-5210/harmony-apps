@@ -1,0 +1,143 @@
+<!doctype html><html lang="en" ><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/><meta name="theme-color" content="#f3f4f4"/><meta name="description" content="An interactive atlas of the human body. Explore named anatomical structures, reveal organ systems, and inspect individual parts in 3D."/><title>Human Atlas</title><link rel="icon" href="./favicon.svg"/>  <script type="module" crossorigin src="./assets/index-CW6uCXww.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-excBUMy1.css">
+</head><body><div id="root"></div>
+<script>
+// ======= 原生 → Web 桥：暴露控制接口 =======
+(function(){
+  function findIsolateBtn() {
+    // 详情卡打开后才有 .detail-actions 里的 Isolate structure 按钮
+    var actions = document.querySelector('.detail-actions');
+    if (!actions) return null;
+    var btns = actions.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) {
+      var t = btns[i].textContent || '';
+      if (t.indexOf('Isolate') >= 0 || t.indexOf('Show surrounding') >= 0) return btns[i];
+    }
+    return null;
+  }
+  function openDetailIfNeeded() {
+    // 详情卡没开 → 点第一个可见结构打开它
+    if (document.querySelector('.detail-sheet')) return;
+    var cards = document.querySelectorAll('[role="option"], .combobox-item, [class*="structure"]');
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].offsetWidth > 0) { cards[i].click(); return; }
+    }
+  }
+  window.__HA_BRIDGE__ = {
+    searchByName: function(name) {
+      var input = document.querySelector('input[placeholder*="Heart"]') ||
+                  document.querySelector('.combobox input') ||
+                  document.querySelector('input[type="text"]');
+      if (!input) return;
+      var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+      setter.call(input, name);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      setTimeout(function(){
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        var first = document.querySelector('.combobox-item, [role="option"]');
+        if (first) first.click();
+      }, 400);
+    },
+    reset: function() {
+      var btns = document.querySelectorAll('button');
+      for (var i = 0; i < btns.length; i++) {
+        var t = btns[i].textContent || '';
+        if (t.indexOf('Reset') >= 0 || t.indexOf('Assemble') >= 0) { btns[i].click(); return; }
+      }
+    },
+    setExplode: function(v) {
+      // 先试原生 range（Radix 有时渲染成原生 range）
+      var slider = document.querySelector('.explode-control input[type="range"]');
+      if (slider) {
+        var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        setter.call(slider, String(v));
+        slider.dispatchEvent(new Event('input', { bubbles: true }));
+        slider.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+      // Radix Slider 渲染成 div[role="slider"]
+      var radix = document.querySelector('.explode-control [role="slider"]');
+      if (radix) {
+        var drag = new MouseEvent('pointerdown', { bubbles: true, cancelable: true });
+        radix.dispatchEvent(drag);
+      }
+    },
+    isolate: function() {
+      var dbg = function(m){ try{ if(window.__HA_NATIVE__&&window.__HA_NATIVE__.onDebug) window.__HA_NATIVE__.onDebug(m);}catch(e){} };
+      var sheet = document.querySelector('.detail-sheet');
+      dbg('isolate called, detail-sheet=' + (!!sheet));
+      // 详情卡没开 → 先尝试打开搜索面板选第一个结构
+      if (!sheet) {
+        // 先点搜索放大镜打开面板
+        var searchBtn = document.querySelector('[aria-label="Search anatomy"], .dock-search, button[class*="search"]');
+        if (searchBtn) { searchBtn.click(); dbg('opened search panel'); }
+        // 等面板渲染后点第一个结果
+        setTimeout(function(){
+          var opt = document.querySelector('.combobox-item, [role="option"], [class*="option"]');
+          if (opt) { opt.click(); dbg('clicked first option: ' + (opt.textContent||'').trim()); }
+          else { dbg('no option found'); }
+          // 再等详情卡渲染
+          setTimeout(function(){
+            var btn = findIsolateBtn();
+            if (btn) { btn.click(); dbg('isolate clicked'); }
+            else { dbg('no isolate btn after option'); }
+          }, 400);
+        }, 500);
+      } else {
+        // 详情卡已开 → 直接点隔离
+        var btn = findIsolateBtn();
+        if (btn) { btn.click(); dbg('isolate clicked (sheet open)'); }
+        else { dbg('no isolate btn in open sheet'); }
+      }
+    },
+    goBack: function() {
+      // Radix Dialog 用 Escape 关闭——先尝试在 document 上派 Escape
+      var sheets = document.querySelectorAll('.detail-sheet.open, .about-sheet.open, [role="dialog"]');
+      if (sheets.length > 0) {
+        var esc = new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, bubbles: true });
+        sheets[0].dispatchEvent(esc);
+        // 再从 document 派一次（Radix 通常在 document 上监听）
+        document.dispatchEvent(esc);
+        return;
+      }
+      // 2. 搜索面板清空并关闭
+      var searchInput = document.querySelector('.combobox input, input[placeholder*="Heart"]');
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        return;
+      }
+    }
+  };
+})();
+
+// ======= Web → 原生桥：监听结构选中 =======
+(function(){
+  var lastTitle = '';
+  function pushStructure() {
+    var el = document.querySelector('.structure-title');
+    if (!el || !el.textContent) return;
+    var t = el.textContent.trim();
+    if (!t || t === lastTitle || t === 'Human Atlas') return;
+    lastTitle = t;
+    try {
+      if (window.__HA_NATIVE__ && window.__HA_NATIVE__.onStructureSelected) {
+        window.__HA_NATIVE__.onStructureSelected(t, t);
+      }
+    } catch (e) {}
+  }
+  var observer = new MutationObserver(pushStructure);
+  function boot() {
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    try {
+      if (window.__HA_NATIVE__ && window.__HA_NATIVE__.onModelReady) {
+        window.__HA_NATIVE__.onModelReady('ok', '');
+      }
+    } catch (e) {}
+  }
+  if (document.body) boot();
+  else document.addEventListener('DOMContentLoaded', boot);
+})();
+</script>
+</body></html>

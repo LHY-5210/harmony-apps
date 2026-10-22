@@ -1,0 +1,24 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "悦动音乐播放器模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "悦动音乐"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "悦动音乐"
+    },
+    {
+      "name": "permission_mic_reason",
+      "value": "用于语音点歌，识别“播放/暂停/下一首”等语音指令"
+    },
+    {
+      "name": "permission_background_reason",
+      "value": "用于切换到后台时继续播放音乐"
+    }
+  ]
+}
