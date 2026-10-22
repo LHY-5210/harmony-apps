@@ -1,0 +1,17 @@
+{
+  "src": [
+    "pages/HomePage",
+    "pages/FunctionPage",
+    "pages/Index",
+    "pages/EditPage",
+    "pages/DetailPage",
+    "pages/MyCardPage",
+    "pages/TaskListPage",
+    "pages/TaskDetailPage",
+    "pages/ProfileEditPage",
+    "pages/CalculatorPage",
+    "pages/PeoplePage",
+    "pages/WeatherPage",
+    "pages/MessageBoardPage"
+  ]
+}

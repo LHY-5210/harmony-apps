@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>留言板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #eef1f6;
+    color: #1a1a1a;
+    padding: 16px;
+    min-height: 100vh;
+  }
+  .notice {
+    background: #e5f3fb; color: #1b7fd4;
+    font-size: 13px; padding: 10px 14px; border-radius: 10px;
+    margin-bottom: 14px; display: none;
+    animation: fadeIn .3s;
+  }
+  .notice.show { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px);} to { opacity: 1; transform: translateY(0);} }
+  .card {
+    background: #fff; border-radius: 16px; padding: 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05); margin-bottom: 14px;
+  }
+  h2 { font-size: 17px; margin-bottom: 12px; }
+  label { display:block; font-size: 12px; color: #888; margin-bottom: 4px; }
+  input, textarea {
+    width: 100%; border: 1px solid #e4e7ed; border-radius: 10px;
+    padding: 10px 12px; font-size: 14px; outline: none;
+    background: #fafbfc; transition: border-color .2s;
+  }
+  input:focus, textarea:focus { border-color: #3d7ef7; background: #fff; }
+  textarea { resize: vertical; min-height: 70px; font-family: inherit; }
+  .row { margin-bottom: 10px; }
+  button {
+    background: #3d7ef7; color: #fff; border: none; border-radius: 10px;
+    padding: 10px 18px; font-size: 14px; cursor: pointer; width: 100%;
+    transition: background .2s;
+  }
+  button:hover { background: #2f6fe6; }
+  button:active { background: #1a56cc; }
+  button:disabled { background: #b0c4f0; cursor: not-allowed; }
+  .list-title {
+    font-size: 14px; color: #666; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .count { background: #3d7ef7; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+  .msg-item {
+    border-bottom: 1px solid #f0f2f5; padding: 12px 0;
+  }
+  .msg-item:last-child { border-bottom: none; }
+  .msg-head { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .msg-name { font-weight: 600; font-size: 14px; color: #1a1a1a; }
+  .msg-time { font-size: 11px; color: #aaa; }
+  .msg-content { font-size: 13px; color: #444; line-height: 1.6; word-break: break-word; }
+  .empty { text-align: center; color: #bbb; padding: 30px 0; font-size: 13px; }
+  .empty .ico { font-size: 40px; display: block; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="notice" id="notice"></div>
+
+<div class="card">
+  <h2>发表留言</h2>
+  <div class="row">
+    <label>昵称</label>
+    <input id="name" type="text" placeholder="请输入昵称" maxlength="20">
+  </div>
+  <div class="row">
+    <label>留言内容</label>
+    <textarea id="content" placeholder="说点什么吧..." maxlength="200"></textarea>
+  </div>
+  <button id="submitBtn" onclick="submit()">提交留言</button>
+</div>
+
+<div class="card">
+  <div class="list-title">
+    <span>全部留言</span>
+    <span class="count" id="count">0</span>
+  </div>
+  <div id="list"><div class="empty"><span class="ico">💬</span>暂无留言，快来抢沙发</div></div>
+</div>
+
+<script>
+  // ===== 网页暴露给原生调用的全局函数 =====
+  // 原生回传历史留言并渲染
+  window.renderMessages = function(list) {
+    var el = document.getElementById('list');
+    var countEl = document.getElementById('count');
+    countEl.textContent = (list || []).length;
+    if (!list || list.length === 0) {
+      el.innerHTML = '<div class="empty"><span class="ico">💬</span>暂无留言，快来抢沙发</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+      var m = list[i];
+      var d = new Date(m.createTime);
+      var timeStr = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      html += '<div class="msg-item">' +
+        '<div class="msg-head"><span class="msg-name">' + esc(m.name) + '</span><span class="msg-time">' + timeStr + '</span></div>' +
+        '<div class="msg-content">' + esc(m.content) + '</div>' +
+        '</div>';
+    }
+    el.innerHTML = html;
+  };
+
+  // 原生推送一条通知（顶部横幅）
+  window.pushNotice = function(text) {
+    var n = document.getElementById('notice');
+    n.textContent = text;
+    n.classList.add('show');
+    setTimeout(function(){ n.classList.remove('show'); }, 3000);
+  };
+
+  // ===== 网页调用原生 =====
+  async function submit() {
+    var name = document.getElementById('name').value.trim();
+    var content = document.getElementById('content').value.trim();
+    var btn = document.getElementById('submitBtn');
+    if (!name) { window.NativeBridge && window.NativeBridge.showToast('请输入昵称'); return; }
+    if (!content) { window.NativeBridge && window.NativeBridge.showToast('请输入留言内容'); return; }
+    btn.disabled = true; btn.textContent = '提交中...';
+    try {
+      var ok = await window.NativeBridge.submitMessage(name, content);
+      if (ok) {
+        document.getElementById('content').value = '';
+        // 提交成功后，原生会触发回传（onSubmitted → renderMessages），此处无需手动刷新
+      } else {
+        window.NativeBridge && window.NativeBridge.showToast('提交失败，请重试');
+      }
+    } catch (e) {
+      window.NativeBridge && window.NativeBridge.showToast('提交异常：' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = '提交留言';
+    }
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function esc(s) {
+    var div = document.createElement('div');
+    div.textContent = String(s);
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>
