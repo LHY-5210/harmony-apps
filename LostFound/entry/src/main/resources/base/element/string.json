@@ -1,0 +1,36 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "失物招领"
+    },
+    {
+      "name": "module_desc",
+      "value": "校园智能失物招领平台"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "失物招领"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "失物招领"
+    },
+    {
+      "name": "permission_internet_reason",
+      "value": "用于与后端同步发布记录、匹配结果与认领流程"
+    },
+    {
+      "name": "permission_camera_reason",
+      "value": "用于拍摄失物或招领物品照片"
+    },
+    {
+      "name": "permission_network_info_reason",
+      "value": "用于监听网络状态，恢复后自动重传待同步记录"
+    },
+    {
+      "name": "permission_microphone_reason",
+      "value": "用于语音口述物品描述，辅助结构化发布"
+    }
+  ]
+}
